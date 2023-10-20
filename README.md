@@ -18,6 +18,14 @@
     <li><strong>🔒 Secure Online Payment:</strong> Thanks to our integration with Stripe, users can enjoy secure online transactions.</li>
 </ul>
 
+<h3>🔍 Additional Backend Features for Proprietors:</h3>
+<ul>
+    <li><strong>📅 Reservation Oversight:</strong> An intuitive dashboard designed exclusively for the proprietor to monitor, review, and manage all the chauffeur reservations made through the platform.</li>
+    <li><strong>💵 Dynamic Pricing Configuration:</strong> Empowering the proprietor with the ability to easily adjust and set the pricing metrics, be it based on hourly rates, per kilometer, or per minute charges.</li>
+    <li><strong>⏰ Time Management:</strong> A flexible setting allowing the proprietor to specify the operational hours for chauffeur availability, ensuring seamless business operations.</li>
+    <li><strong>📈 Analytics & Reporting:</strong> Vital insights and reports generated on-the-go for the proprietor to keep a pulse on the business trends, user preferences, and revenue metrics.</li>
+</ul>
+
 <h3>🔧 Technical Stack:</h3>
 <ul>
     <li><strong>Full Stack:</strong> Leveraging Django for both frontend and backend implementations.</li>
