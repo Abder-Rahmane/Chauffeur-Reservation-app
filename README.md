@@ -44,13 +44,7 @@
     <li><strong>🔐 Ensuring Secure Transactions:</strong> While integrating Stripe, we gave utmost priority to safeguard users' financial data, thus providing a trustworthy payment environment.</li>
 </ul>
 
-
-
-
-https://github.com/Abder-Rahmane/Chauffeur-Reservation-app/assets/90828091/74a6306b-f2f3-4488-a44a-3488e711459b
-
-
-
+https://github.com/Abder-Rahmane/Chauffeur-Reservation-app/assets/90828091/0fbfe87e-f090-4537-bbef-8f82f73c367c
 
 </body>
 </html>
