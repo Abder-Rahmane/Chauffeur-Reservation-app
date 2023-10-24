@@ -29,7 +29,8 @@
 <h3>🔧 Technical Stack:</h3>
 <ul>
     <li><strong>Full Stack:</strong> Leveraging Django for both frontend and backend implementations.</li>
-    <li><strong>Database:</strong> (Specify your database, e.g., PostgreSQL, SQLite)</li>
+    <li><strong>Database:</strong>PostgreSQL
+        </li>
 </ul>
 
 <h3>🛠️ APIs Used:</h3>
