@@ -8,6 +8,8 @@
 
 <h2>🚗 Chauffeur Booking Application Overview</h2>
 
+https://github.com/Abder-Rahmane/Chauffeur-Reservation-app/assets/90828091/0fbfe87e-f090-4537-bbef-8f82f73c367c
+
 <p>Our application is a state-of-the-art platform tailored to make reserving a chauffeur a seamless experience for users. Sporting a user-friendly interface, it bridges the gap between chauffeurs and individuals, ensuring convenience at every step.</p>
 
 <h3>🌟 Key Features:</h3>
@@ -45,7 +47,7 @@
     <li><strong>🔐 Ensuring Secure Transactions:</strong> While integrating Stripe, we gave utmost priority to safeguard users' financial data, thus providing a trustworthy payment environment.</li>
 </ul>
 
-https://github.com/Abder-Rahmane/Chauffeur-Reservation-app/assets/90828091/0fbfe87e-f090-4537-bbef-8f82f73c367c
+
 
 </body>
 </html>
