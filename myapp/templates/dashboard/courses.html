@@ -1,0 +1,443 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<style>
+    @media (max-width: 950px){
+        .sidebar {
+            display:none!important;
+        }
+        .flex-course {
+            display:none!important;
+        }
+
+        .flex-course-mobile {
+            display: flex!important;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 100px;
+            padding-bottom: 140px;
+        }
+        .pl-md-4, .px-md-4 {
+            padding-left: 2.5rem!important;
+            padding-right: 2.5rem!important;
+            overflow: initial!important;
+        }
+    }
+
+    .ticket-card-mobile {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        margin: 10px;
+        box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 280px;
+    }
+
+    span.hist {
+        background-color: #000000;
+        font-size: 12px;
+        border: none;
+        border-radius: 3px;
+        padding: 1px 10px;
+        color: white;
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out;
+    }
+
+    .popup {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: #fff;
+        z-index: 1000;
+        width: 80%;
+        max-width: 400px;
+        font-size: 13px;
+    }
+    
+    .overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        background-color: rgb(0 0 0 / 97%);
+        z-index: 999;
+    }
+
+    .popup strong {
+        color: #333;
+    }
+    
+    .detail-2 {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        margin: 10px 0;
+    }
+    
+    .roadmap2 {
+        max-width: 50px;
+        height: auto;
+    }
+    
+
+    
+    .badge-paid {
+        background-color: #4CAF50;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-weight: bold;
+    }
+    
+    .badge-unpaid {
+        background-color: #FF9800;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-weight: bold;
+    }
+    
+    .complete-btn, .refund-btn {
+        margin-top: 15px;
+        background-color: #2196F3;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    
+    .complete-btn:hover, .refund-btn:hover {
+        background-color: #0D83D1;
+    }
+    
+    .refund-btn {
+        background-color: #FF5252;
+    }
+    
+    .refund-btn:hover {
+        background-color: #E04040;
+    }
+    
+    p {
+        border-bottom: solid 1px;
+        padding-bottom: 16px;
+        display: flex;
+        justify-content: space-between;
+        border-color: #f0f0f0;
+    }
+
+    .container-popup {
+        padding: 18px;
+    }
+    .div-button {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+</style>
+{% csrf_token %}
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
+        <div>
+           <h1 class="h2">Courses</h1>
+            <span class="hist">En cour</span>&nbsp;<span class="hist" style="background-color :#f1f5f9; color:black;"><a style="color:black; cursor: pointer;" href="{% url 'historique' %}">Historique</a></span><br><br>
+       </div>
+    </div>
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+            <li{% if message.tags %} style="color:green;" class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+    <div class="flex-course">
+          {% for reservation in user_reservations %}
+          <div class="ticket-card" data-id="{{ reservation.id }}">
+              <div class="header">
+                  <h1>Réservation #{{ reservation.reservation_id }}</h1>
+              </div>
+
+              <div class="ticket-info">
+                  <div class="detail-2">
+                      <div>
+                        <img class="roadmap2" src="{% get_static_prefix %}img/{% if reservation.step_place %}roadmapstep2{% else %}roadmap1{% endif %}.png" alt="Roadmap">
+                      </div>
+                      <div>
+                          <span>{{ reservation.from_place }}</span><br><br>
+                          {% if reservation.step_place %}
+                          <span>{{ reservation.step_place }}</span><br><br>
+                         {% endif %}
+                          <span>{{ reservation.to_place }}</span>
+                      </div>
+                  </div>
+                  <p>
+                    <span class="ticket-value">
+                        {% if reservation.is_round_trip %}
+                            Aller-retour
+                            {% if reservation.step_on_return %}
+                                <strong>avec</strong> étape au retour
+                            {% else  %}
+                            <strong>sans</strong> étape au retour
+                            {% endif %}
+                        {% else %}
+                            Aller simple
+                        {% endif %}
+                    </span>
+                </p>
+                  <p>
+                    <span class="ticket-value">{{ reservation.get_vehicle_type_display }}</span> 
+                    <span class="ticket-value">
+                        {{ reservation.display_date }} à <strong>{{ reservation.reservation_time|time:"H\hi" }}</strong>
+                    </span>
+                 </p>
+                 <p><span class="ticket-value">{{ reservation.name }}</span> <span>{{ reservation.first_name }}</span></p>
+                  <p><span class="ticket-value">{{ reservation.email }}</span><span class="ticket-value">{{ reservation.phone_number }}</span></p>
+                  <p style="border:none;">
+                   <span class="ticket-value">{{ reservation.price }} €</span>
+                   {% if reservation.payment_method == "online" and reservation.payment_status %}
+                       <span class="badge-paid">En ligne et payé</span>
+                   {% elif reservation.payment_method == "cash" %}
+                       <span class="badge-unpaid">Paiement sur place</span>
+                   {% endif %}
+               </p>
+              </div>
+          </div>
+          
+            <div class="popup" id="popup_{{ reservation.id }}">
+                <div class="header">
+                    <h1>Réservation #{{ reservation.reservation_id }}</h1>
+                </div>
+            <div class='container-popup'>
+                <div class="detail-2" style=" padding-bottom: 30px;">
+                    <div>
+                      <img class="roadmap2" src="{% get_static_prefix %}img/{% if reservation.step_place %}roadmapstep2{% else %}roadmap1{% endif %}.png" alt="Roadmap">
+                    </div>
+                    <div>
+                        <span>{{ reservation.from_place }}</span><br><br>
+                        {% if reservation.step_place %}
+                        <span>{{ reservation.step_place }}</span><br><br>
+                       {% endif %}
+                        <span>{{ reservation.to_place }}</span>
+                    </div>
+                </div>
+                <p>
+                    <span class="ticket-value">
+                        {% if reservation.is_round_trip %}
+                            Aller-retour
+                            {% if reservation.step_on_return %}
+                                <strong>avec</strong> étape au retour
+                            {% else  %}
+                            <strong>sans</strong> étape au retour
+                            {% endif %}
+                        {% else %}
+                            Aller simple
+                        {% endif %}
+                    </span>
+                    <span class="ticket-value">
+                        {{ reservation.passengers }}  <i class="fas fa-users"></i>
+                    </span>
+                </p>
+                <p>
+                  <span class="ticket-value">{{ reservation.get_vehicle_type_display }}</span> 
+                  <span class="ticket-value">
+                      {{ reservation.display_date }} à <strong>{{ reservation.reservation_time|time:"H\hi" }}</strong>
+                  </span>
+               </p>
+               <p><span class="ticket-value">{{ reservation.name }}</span>
+                <span>{{ reservation.first_name }}</span>
+                </p>
+                {% if reservation.assistance or reservation.special_requests %}
+                 {% if reservation.assistance %}
+                     <p><strong>Assistance :</strong> {{ reservation.assistance }}</p>
+                 {% endif %}
+                 {% if reservation.special_requests %}
+                     <p><strong>Demandes spéciales :</strong> {{ reservation.special_requests }}</p>
+                 {% endif %}
+             {% endif %}
+               <p><span class="ticket-value">{{ reservation.email }}</span><span class="ticket-value">{{ reservation.phone_number }}</span></p>
+               <p style="border:none;">
+                <span class="ticket-value">{{ reservation.price }} €</span>
+                {% if reservation.payment_method == "online" and reservation.payment_status %}
+                    <span class="badge-paid">En ligne et payé</span>
+                {% elif reservation.payment_method == "cash" %}
+                    <span class="badge-unpaid">Paiement sur place</span>
+                {% endif %}
+            </p>
+            <div class="div-button">
+                <form class="update-form" method="post" action="{% url 'update_reservation' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="reservation_id" value="{{ reservation.id }}">
+                    <button type="submit" class="complete-btn">Compléter</button>
+                </form>
+                
+                {% if reservation.payment_method == "online" and reservation.payment_status %}
+                <form action="">
+                <button type="button" class="refund-btn" data-id="{{ reservation.id }}">Rembourser</button>
+                </form>
+                {% endif %}
+            </div>
+
+            </div>
+        </div>
+
+          {% endfor %}
+    </div>
+    <div class="overlay"></div>
+   <div class="flex-course-mobile" style="display:none;">
+        {% for reservation in user_reservations %}
+        <div class="ticket-card-mobile" data-id="{{ reservation.id }}">
+            <div class="header">
+                <h1>Réservation #{{ reservation.reservation_id }}</h1>
+            </div>
+            <div class="ticket-info">
+                <div class="detail-2">
+                    <div>
+                      <img class="roadmap2" src="{% get_static_prefix %}img/{% if reservation.step_place %}roadmapstep2{% else %}roadmap1{% endif %}.png" alt="Roadmap">
+                    </div>
+                    <div>
+                        <span>{{ reservation.from_place }}</span><br><br>
+                        {% if reservation.step_place %}
+                        <span>{{ reservation.step_place }}</span><br><br>
+                       {% endif %}
+                        <span>{{ reservation.to_place }}</span>
+                    </div>
+                </div>
+                <div class="bottom-ticket">
+                <p>
+                    <span class="ticket-value">Type de transfert</span>
+                    <span class="ticket-value">
+                        {% if reservation.is_round_trip %}
+                            Aller-retour
+                            {% if reservation.step_on_return %}
+                                avec étape au retour
+                            {% endif %}
+                        {% else %}
+                            Aller simple
+                        {% endif %}
+                    </span>
+                </p>
+                <p>
+                    <span class="ticket-value">{{ reservation.get_vehicle_type_display }}</span> 
+                    <span class="ticket-value">
+                        {{ reservation.display_date }} à <strong>{{ reservation.reservation_time|time:"H\hi" }}</strong>
+                    </span>
+                 </p>
+                <p style="border:none;">
+                 <span class="ticket-value">{{ reservation.price }} €</span>
+                 {% if reservation.payment_method == "online" and reservation.payment_status %}
+                     <span class="badge-paid">En ligne et payé</span>
+                 {% elif reservation.payment_method == "cash" %}
+                     <span class="badge-unpaid">Paiement sur place</span>
+                 {% endif %}
+             </p>
+            </div>
+            </div>
+        </div>
+        
+        <div class="popup" id="popup-mobile_{{ reservation.id }}">
+            <div class="header">
+                <h1>Réservation #{{ reservation.reservation_id }}</h1>
+            </div>
+            <div class='container-popup'>
+                <div class="detail-2" style=" padding-bottom: 30px;">
+                    <div>
+                      <img class="roadmap2" src="{% get_static_prefix %}img/{% if reservation.step_place %}roadmapstep2{% else %}roadmap1{% endif %}.png" alt="Roadmap">
+                    </div>
+                    <div>
+                        <span>{{ reservation.from_place }}</span><br><br>
+                        {% if reservation.step_place %}
+                        <span>{{ reservation.step_place }}</span><br><br>
+                       {% endif %}
+                        <span>{{ reservation.to_place }}</span>
+                    </div>
+                </div>
+                <p>
+                    <span class="ticket-value">
+                        {% if reservation.is_round_trip %}
+                            Aller-retour
+                            {% if reservation.step_on_return %}
+                                <strong>avec</strong> étape au retour
+                            {% else  %}
+                            <strong>sans</strong> étape au retour
+                            {% endif %}
+                        {% else %}
+                            Aller simple
+                        {% endif %}
+                    </span>
+                    <span class="ticket-value">
+                        {{ reservation.passengers }}  <i class="fas fa-users"></i>
+                    </span>
+                </p>
+                <p>
+                  <span class="ticket-value">{{ reservation.get_vehicle_type_display }}</span> 
+                  <span class="ticket-value">
+                      {{ reservation.display_date }} à <strong>{{ reservation.reservation_time|time:"H\hi" }}</strong>
+                  </span>
+               </p>
+               <p><span class="ticket-value">{{ reservation.name }}</span>
+                <span>{{ reservation.first_name }}</span>
+                </p>
+                {% if reservation.assistance or reservation.special_requests %}
+                 {% if reservation.assistance %}
+                     <p><strong>Assistance :</strong> {{ reservation.assistance }}</p>
+                 {% endif %}
+                 {% if reservation.special_requests %}
+                     <p><strong>Demandes spéciales :</strong> {{ reservation.special_requests }}</p>
+                 {% endif %}
+             {% endif %}
+               <p><span class="ticket-value">{{ reservation.email }}</span><span class="ticket-value">{{ reservation.phone_number }}</span></p>
+               <p style="border:none;">
+                <span class="ticket-value">{{ reservation.price }} €</span>
+                {% if reservation.payment_method == "online" and reservation.payment_status %}
+                    <span class="badge-paid">En ligne et payé</span>
+                {% elif reservation.payment_method == "cash" %}
+                    <span class="badge-unpaid">Paiement sur place</span>
+                {% endif %}
+            </p>
+            <div class="div-button">
+                <form class="update-form" method="post" action="{% url 'update_reservation' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="reservation_id" value="{{ reservation.id }}">
+                    <button type="submit" class="complete-btn">Compléter</button>
+                </form>
+                
+                {% if reservation.payment_method == "online" and reservation.payment_status %}
+                <form action="">
+                <button type="button" class="refund-btn" data-id="{{ reservation.id }}">Rembourser</button>
+                </form>
+                {% endif %}
+            </div>
+            </div>
+        </div>
+
+    {% endfor %}
+</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('.ticket-card, .ticket-card-mobile').click(function() {
+            var popupId = '#popup_' + $(this).data('id');
+    
+            if ($(this).hasClass('ticket-card-mobile')) {
+                popupId = '#popup-mobile_' + $(this).data('id');
+            }
+    
+            $(popupId).show();
+            $('.overlay').show();
+        });
+        
+        $('.overlay').click(function() {
+            $('.popup, .popup-mobile').hide();
+            $(this).hide();
+        });
+    
+    });
+    </script>
+
+{% endblock %}

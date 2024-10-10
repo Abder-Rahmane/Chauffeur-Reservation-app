@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion au Tableau de Bord des Réservations</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<style>
+    body {
+        font-family: roboto;
+    }
+    
+    .login-panel {
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    }
+    
+    .card-header {
+        border-bottom: none;
+    }
+    
+    .btn-dark {
+        background-color: black;
+        border-color: #000;
+    }
+
+    .bg-dark {
+        background-color: #000000!important;
+    }
+    
+    .btn-dark:hover {
+        background-color: #333;
+    }
+    
+</style>
+<body>
+    <div class="container">
+        <div class="row justify-content-center align-items-center vh-100">
+            <div class="col-md-4">
+                <div class="login-panel card">
+                    <div class="card-header bg-dark text-white">
+                        <h3>Connexion </h3>
+                    </div>
+                    <div class="card-body">
+                        <form  method="post">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label for="username"></label>
+                                <input type="text" class="form-control" id="username" name="username" placeholder="Nom d'utilisateur"required>
+                            </div>
+                            <div class="form-group">
+                                <input type="password" class="form-control" id="password" name="password" placeholder="Mot de passe" required>
+                            </div>
+                            <br>
+                            <button type="submit" class="btn btn-dark">Se connecter</button>
+                        </form>
+                        {% if messages %}
+                        <br>
+                            {% for message in messages %}
+                                <span{% if message.tags %} style="color:red;" class="{{ message.tags }}"{% endif %}>{{ message }}</span>
+                            {% endfor %}
+                    {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
