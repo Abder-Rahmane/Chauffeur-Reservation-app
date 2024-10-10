@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9, user-scalable=no">
+<title>Réservation de Chauffeur</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<link href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
+<link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.1.0/mapbox-gl-directions.css' type='text/css' />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,300;0,400;0,500;0,600;1,200&display=swap" rel="stylesheet">
+<script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.1.0/mapbox-gl-directions.js'></script>
+<script src="https://js.stripe.com/v3/"></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+</head>
+<style>
+    body { 
+        margin: 0;
+        background-color: white;
+        font-family: roboto;
+        padding: 0px;
+        touch-action: manipulation;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .wraper {
+        background-color: #fff;
+        width: 100%;
+        display: flex;
+        overflow: hidden;
+        border-radius: 4px;
+        flex-direction: row-reverse;
+        align-items: center;
+        justify-content: center;
+    }
+    .divmaps {
+        width: 50%;
+        padding: 40px;
+        display: none;
+    }
+    #map {
+        height: 40vh;
+        width: 100%;
+        border-radius: 10px;
+    }
+    #reservationForm { 
+        height: 50%; /* Prend 50% de la hauteur du parent */
+        width: 50%;
+        overflow-y: auto; /* Active le défilement si nécessaire à l'intérieur du formulaire */
+        padding: 40px;
+    }
+    /* Lorsque la fenêtre est inférieure à 800px de large */
+    @media (max-width: 800px) {
+        .wraper {
+            display: flex;
+            flex-direction: column-reverse;
+        }
+        #reservationForm, .divmaps {
+            width: 100%; /* Prend toute la largeur disponible */
+            padding:0px;
+        }
+        .divmaps {
+            width: 100%;
+            padding: 25px 10px;
+        }
+        #map {
+            height: 30vh;
+            width: 100%;
+            border-radius: 10px;
+        }
+    }
+    
+input, select, button {
+    height: 40px;
+    width: 100%;
+    margin-top: 8px;
+    outline: none;
+    padding: 0 15px;
+    font-size: 13px;
+    font-weight: 400;
+    color: #333;
+    border: 1px solid #ededed;
+    border-bottom-width: 3.5px;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    font-family: roboto;
+}
+button {
+    color: #fff;
+    letter-spacing: 1px;
+    border: none;
+    background-color: #000000;
+    background-image: linear-gradient(62deg, #2d2d2d 0%, #272727 100%);
+    cursor: pointer;
+    width: 100%;
+}
+.step { 
+    display: none; 
+    height: 100%; 
+}
+.step.active {
+    display: block;
+}
+
+.wrapper form .input-box {
+    height: 37px;
+    margin: 12px 0;
+}
+.wrapper form .input-box {
+    height: 37px;
+    margin: 12px 0;
+}
+
+.input-box.button input {
+    color: #fff;
+    letter-spacing: 1px;
+    border: none;
+    background-color: #1b8426;
+    background-image: linear-gradient(62deg, #7efbb3 0%, #036704 100%);
+    cursor: pointer;
+}
+
+*, *:before, *:after {
+    box-sizing: border-box;
+}
+img {
+    width: 10px;
+}
+
+
+.input-box {
+    width: 100%;
+}
+.div-cote {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.div-cote > div {
+    flex-shrink: 0; /* Evite le rétrécissement des éléments enfants en-dessous de leur largeur naturelle */
+}
+
+.div-cote > div:nth-child(2) {
+    flex-grow: 1; /* Fait en sorte que cette div prenne tout l'espace disponible */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin: 0 20px; /* Ajoutez un espace autour des inputs. Ajustez selon vos besoins */
+}
+
+.input-box input,
+.input-box button {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+img.plusimg {
+    width: 23px;
+    margin-top: 39px;
+    cursor: pointer;
+}
+
+span.title1 {
+        margin-left: 31px;
+        font-weight: 600;
+        font-size: 20px;
+    }
+
+    /* Style du conteneur de suggestions */
+.pac-container {
+    background-color: #FFF;
+    position: absolute !important;
+    z-index: 1000;
+    border-top: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Style des suggestions */
+.pac-item {
+    cursor: pointer;
+    padding: 0 4px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    line-height: 30px;
+    text-align: left;
+    border-top: 1px solid #e6e6e6;
+    font-size: 11px;
+    color: #999;
+}
+
+/* Style lors du survol des suggestions */
+.pac-item:hover {
+    background-color: #fafafa;
+}
+
+/* Style de la requête dans la suggestion */
+.pac-item-query {
+    font-size: 14px;
+    color: #000;
+    font-weight: 300;
+}
+
+input#fromPlace {
+    width: 100%;
+    padding-right: 40px; /* espace pour l'icône */
+}
+
+input#fromPlace:valid {
+    border-color: #272727;
+  }
+input#startDate:valid {
+    border-color: #272727;
+  }
+
+input#startTime:valid {
+    border-color: #272727;
+  }
+
+input#toPlace:valid {
+    border-color: #272727;
+  }
+
+input#inputTel:valid {
+    border-color: #272727;
+}
+
+input#inputEmail:valid {
+    border-color: #272727;
+}
+
+span.sous-title {
+    margin-left: 31px;
+    font-weight: 300;
+    font-size: 12px;
+}
+
+input#volid {
+    border-color: #ededed!important;
+}
+
+input#assistanceid {
+    border-color: #ededed!important;
+}
+
+img#backToStep1 {
+    width: 24px;
+}
+
+img#backToStep2 {
+    width: 24px;
+}
+
+
+.option {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin-bottom: 10px;
+    padding: 13px 21px;
+    border-radius: 15px;
+    transition: border-color 0.3s;
+    color: #282828;
+    border: solid 2px;
+    border-color: #c9c9c9;
+    flex-direction: row-reverse;
+}
+  .option.active {
+    border: solid 2px;
+    border-color: #5664cf;
+}
+.option img {
+    width: 93px;
+    margin-bottom: -23px;
+    margin-top: -34px;
+    margin-right: 22px;
+}
+  .details {
+    text-align: left;
+  }
+  .image-container {
+    border-radius: 5px;
+    transition: border-color 0.3s;
+  }
+  .option.active .image-container {
+    border-color: #4caf50;
+  }
+
+  span.s-t-p {
+    font-size: 11px;
+    font-weight: 300;
+}
+
+.back_step1-arrow {
+    display: flex;
+    align-items: center;
+    padding-top: 20px;
+    padding-bottom: 70px;
+}
+
+span.title-choicev {
+    margin-left: 10px;
+    font-weight: 600;
+}
+
+.recap-addres {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    background-color: #f5f5f5;
+    padding: 12px 20px 12px;
+    border-radius: 8px;
+    border: solid 1px;
+    border-color: #c9c9c9;
+}
+.price {
+    margin-left: auto; /* pousse le div vers la droite */
+    /* Ajoutez d'autres styles au besoin */
+}
+span.s-price {
+    font-weight: 600;
+    color: #5664cf;
+}
+
+.title-choicev-div {
+    margin-top: 20px;
+    padding-top: 21px;
+    border-top: solid 1px;
+    border-color: #c9c9c9;
+}
+
+img.roadmap2 {
+    width: 18px;
+    margin-right: 11px;
+}
+
+.roadmap1 {
+    margin-top: 28px;
+}
+
+.banner-time-km {
+    background-color: #5664d0;
+    color: white;
+    border-radius: 8px;
+    height: 46px;
+    border: solid 1px;
+    padding: 10px 20px;
+    font-size: 14px;
+    margin-top: 15px;
+}
+
+
+
+input[type="text"]:valid {
+    border-color: #272727;
+}
+
+.banner-time-km1 {
+    background-color: #5664d0;
+    color: white;
+    border-radius: 8px;
+    height: 46px;
+    border: solid 1px;
+    padding: 10px 20px;
+    font-size: 14px;
+    margin-top: 15px;
+}
+
+.banner-price-auto {
+    background-color: #f5f5f5;
+    color: black;
+    border-radius: 8px;
+    height: 64px;
+    border: solid 1px;
+    padding: 10px 20px;
+    font-size: 14px;
+    margin-top: 15px;
+    border-color: #c9c9c9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+img#backToStep3 {
+    width: 24px;
+}
+
+.banner-time-km2 {
+    background-color: #5664d0;
+    color: white;
+    border-radius: 8px;
+    height: 46px;
+    border: solid 1px;
+    padding: 10px 20px;
+    font-size: 14px;
+    margin-top: 15px;
+}
+
+textarea {
+    height: 80px;
+    width: 100%;
+    margin-top: 8px;
+    outline: none;
+    padding: 0 15px;
+    font-size: 13px;
+    font-weight: 400;
+    color: #333;
+    border: 1px solid #ededed;
+    border-bottom-width: 3.5px;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    font-family: roboto;
+    padding-top: 10px;
+}
+
+img#backToStep4 {
+    width: 24px;
+}
+
+.banner-time-km3 {
+    background-color: #5664d0;
+    color: white;
+    border-radius: 8px;
+    height: 46px;
+    border: solid 1px;
+    padding: 10px 20px;
+    font-size: 14px;
+    margin-top: 15px;
+}
+
+
+.payment-select {
+    color: black;
+    border-radius: 8px;
+    height: 42px;
+    border: solid 1px;
+    padding: 10px 20px;
+    font-size: 12px;
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;  /* ou la largeur désirée */
+}
+.selected {
+    border: 2px solid #5664d0;
+    background-color: #8d99f1a8;
+}
+
+
+div#successSection {
+    text-align: center;
+    padding: 20px 20px;
+}
+
+.recap-book {
+    margin-left: auto;
+    margin-right: auto;
+    background-color: #f5f5f5;
+    padding: 12px 20px 12px;
+    border-radius: 8px;
+    border: solid 1px;
+    border-color: #c9c9c9;
+    width: 90%;
+    text-align: left;
+}
+
+img.sucess-book {
+    width: 102px;
+    display: none;
+}
+
+.text-end-recap {
+    width: 76%;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+button.reserv-now {
+    background-image: linear-gradient(62deg, #5664d0 0%, #5664d0 100%);
+    height: 30px;
+    width: 51%;
+    margin-left: 49%;
+    font-size: 11px;
+}
+a#downloadLink {
+    text-decoration: none;
+    color: #adadad;
+}
+
+input#startDate {
+    height: 40px;
+    width: 100%;
+    margin-top: 8px;
+    outline: none;
+    padding: 0 15px;
+    font-size: 13px;
+    font-weight: 400;
+    color: #333;
+    border: 1px solid #ededed;
+    border-bottom-width: 3.5px;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    -webkit-appearance: none;
+    font-family: roboto;
+    background-color: white;
+    text-align: left;
+}
+
+input#startTime {
+    height: 40px;
+    width: 100%;
+    margin-top: 8px;
+    outline: none;
+    padding: 0 15px;
+    font-size: 13px;
+    font-weight: 400;
+    color: #333;
+    border: 1px solid #ededed;
+    border-bottom-width: 3.5px;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    -webkit-appearance: none;
+    font-family: roboto;
+    background-color: white;
+    text-align: left;
+}
+.input-box.datetime {
+    display: flex;
+    justify-content: flex-start;
+    flex-direction: row-reverse;
+    align-items: center;
+    font-size: 15px;
+}
+
+label {
+    width: 100%;
+    font-size: 13px;
+}
+
+.banner-informations {
+    background-color: #f5f5f5;
+    color: black;
+    border-radius: 8px;
+    height: 64px;
+    border: solid 1px;
+    padding: 10px 20px;
+    font-size: 14px;
+    margin-top: 15px;
+    border-color: #c9c9c9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.input-box {
+    position: relative;
+}
+
+.input-field {
+    width: 100%;
+    padding-right: 25px; /* Make room for the icon */
+}
+
+.clear-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.input-box.allret {
+    display: flex;
+    align-items: center;
+}
+select.allere-select {
+    color: black;
+    border-radius: 31pxpx;
+    height: 42px;
+    padding: 10px 20px;
+    font-size: 12px;
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 96%;
+    -webkit-appearance: none;
+    background-color: white;
+}
+
+select.allere-select:valid {
+    border-color: #272727;
+}
+
+div#displayallretback {
+    display: none;
+}
+
+.banner-time-date-goback {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    justify-content: space-between;
+    background-color: #f5f5f5;
+    padding: 12px 20px 12px;
+    border-radius: 8px;
+    border: solid 1px;
+    border-color: #c9c9c9;
+    margin-top:20px;
+    margin-bototm:20px;
+}
+
+span#date_and_time {
+    font-weight: bold;
+}
+
+span#type_transfert {
+    font-weight: bold;
+}
+</style>
+<body>
+<section class="wraper">
+    <div class="divmaps">
+        <div id='map'></div>
+    </div>
+    <form id="reservationForm" action="{% url 'make_reservation' user_uuid=user_uuid %}" method="post">
+        {% csrf_token %}
+        <div class="step active" id="step1">
+           {% comment %} <span class="title1">Réserver votre course</span><br>
+            <span class="sous-title">avec sérénité en moins de 3 minutes... 👌</span><br><br> {% endcomment %}
+            
+            <div class="div-cote">
+                <div class='roadmap1'>
+                    <img id="roadmapImg" src="{% get_static_prefix %}img/roadmap.png" alt="">
+                </div>
+                <div>
+                    <div class="input-container">
+                        <div class="input-box">
+                            <input id="fromPlace" class="input-field" name="from_place" type="text" placeholder="Lieu de prise en charge" required />
+                            <i onclick="clearField('fromPlace')" class="clear-icon fas fa-times-circle"></i>
+                        </div>
+                        <div class="input-box">
+                            <input id="toPlace" class="input-field" name="to_place" type="text" placeholder="Où allez-vous ?" required />
+                            <i onclick="clearField('toPlace')" class="clear-icon fas fa-times-circle"></i>
+                        </div>
+                    </div>
+                    <!-- Adding Date and Time Input Fields -->
+                    <div class="input-box datetime">
+                        <input id="startDate" name="reservation_date" type="date" required />
+                        <label for="startDate">Date de départ</label>
+                    </div>
+                    <div class="input-box datetime">
+                        <input id="startTime" name="reservation_time" type="time" required />
+                        <label for="startTime">Heure de départ</label>
+                    </div>
+                    <div class="input-box button">
+                        <button class="reserv-now" onclick="fillForImmediateBooking()">Réserver Maintenant</button>
+                    </div>
+                    <div class="input-box allret">
+                        <label for="startTime">Aller / Retour</label>
+                        <select name="is_round_trip"  class="allere-select">
+                            <option value="No" selected>Non</option>
+                            <option value="Yes">Oui</option>
+                        </select>
+                    </div>
+                    <div class="input-box allret" id="displayallretback">
+                        <label for="startTime">Etape au retour</label>
+                        <select name="step_on_return" class="allere-select">
+                            <option value="No" selected>Sans étape au retour</option>
+                            <option value="Yes">Avec étape au retour</option>
+                        </select>
+                    </div>
+                    <span style="color:red; margin-top:10px;" id="errorStep1" class="error"></span>
+                    <div class="input-box button">
+                        <button type="button" onclick="showStep(2)">Suivant</button>
+                    </div>
+                </div>
+                <div>
+                    <img id="toggleImg" class="plusimg" src="{% get_static_prefix %}img/plus.png" alt="" onclick="toggleStepInput()" />
+                </div>
+            </div>
+        </div>
+
+
+        <div class="step" id="step2">
+        <div class="back_step1-arrow">
+            <img src="{% get_static_prefix %}img/arrow-back.png" alt="Retour" id="backToStep1" style="cursor:pointer;"> 
+            <span class="title-choicev">Lieux, date et heur de la course</span>
+        </div> 
+
+         <div class='recap-addres'>
+             <div style="margin-left:10px;" id="address-container">
+
+                 <span style="font-weight:300; font-size:11px; color:#6b6b6b;"> 
+                     Lieu de départ  <br>
+                     <span style="font-weight:600; color:black; font-size:12px" id="departure-address-step2"></span>
+                 </span>
+                 <br>
+                 <span style="margin-top: 15px; margin-bottom: 15px; font-weight:300; font-size:11px; color:#6b6b6b; display: none;" id="step-address-container"> 
+                     Étape <br>
+                     <span style="font-weight:600; color:black; font-size:12px" id="step-address-step2"></span>
+                 </span>
+                 <span style="font-weight:300; font-size:11px; color:#6b6b6b;"> 
+                     Lieu d'arrivée   <br>
+                     <span style="font-weight:600; color:black; font-size:12px" id="arrival-address-step2"></span>
+                 </span>
+
+             </div>
+             <div>
+                 <img class="roadmap2" src="{% get_static_prefix %}img/roadmap1.png" alt="" id="roadmap-image_base">
+                 <img class="roadmap2" src="{% get_static_prefix %}img/roadmapstep2.png" alt="" id="roadmap-image1" style="display:none; width: 30px;">
+             </div>
+        </div>
+
+        <div class="banner-time-date-goback">
+            <div>
+                <span id="date_and_time" class="s-t-p"></span>
+            </div>
+            <div>
+                <span id="type_transfert" class="s-t-p" ></span> 
+            </div>
+        </div>
+
+        <div class="title-choicev-div">
+            <span class="title-choicev">Choisissez le type vehicules</span>
+        </div><br>
+
+        {% for vehicle_type in vehicle_types %}
+        <div class="option" onclick="selectVehicle(this, '{{ vehicle_type.name }}')">
+            <div class="price" data-vehicle-type="{{ vehicle_type.name }}">
+                <span class="s-price">{{ vehicle_type.minimum_cost }}$</span>
+            </div>
+            <div class="details">
+                <strong>{{ vehicle_type.name|capfirst }}</strong><br>
+                <span class="s-t-p">{{ vehicle_type.seats }} places, {{ vehicle_type.baggage }} bagages</span>
+            </div>
+            <div class="image-container">
+                <img src="{% get_static_prefix %}img/{{ vehicle_type.name }}.png" alt="{{ vehicle_type.name }}">
+            </div>
+        </div>
+    {% endfor %}
+    
+    <input type="hidden" id="selectedVehicle" name="vehicle_type" value="" />
+    <input type="hidden" id="selectedPrice" name="price" value="" />
+
+            <div class="banner-time-km">
+                <span>⌛ Environ # minutes, # km de routes</span>
+            </div><br>
+            <span style="color:red;" id="errorStep2" class="error"></span>
+            <div class="button-container">
+              <button type="button" onclick="showStep(3)">Suivant</button>
+            </div>
+          </div>
+    
+
+        <div class="step" id="step3">
+            <div class="back_step1-arrow">
+              <img src="{% get_static_prefix %}img/arrow-back.png" alt="Retour" id="backToStep2" style="cursor:pointer;">
+              <span class="title-choicev">Type de véhicules</span>
+            </div>
+            <div class='recap-addres'>
+                <div style="margin-left:10px;" id="address-container">
+                    <span style="font-weight:300; font-size:11px; color:#6b6b6b;"> 
+                        Lieu de départ  <br>
+                        <span style="font-weight:600; color:black; font-size:12px" id="departure-address-step3"></span>
+                    </span><br>
+                    <span style="margin-top: 15px; margin-bottom: 15px; font-weight:300; font-size:11px; color:#6b6b6b; display: none;" id="step-address-container1"> 
+                        Étape <br>
+                        <span style="font-weight:600; color:black; font-size:12px" id="step-address-step3"></span>
+                    </span>
+                    <span style="font-weight:300; font-size:11px; color:#6b6b6b;"> 
+                        Lieu d'arrivée   <br>
+                        <span style="font-weight:600; color:black; font-size:12px" id="arrival-address-step3"></span>
+                    </span>
+                </div>
+                <div>
+                    <img class="roadmap2" src="{% get_static_prefix %}img/roadmap1.png" alt="" id="roadmap-image_base1">
+                    <img class="roadmap2" src="{% get_static_prefix %}img/roadmapstep2.png" alt="" id="roadmap-image2" style="display:none; width: 30px;">
+                </div>
+            </div>
+            <div class="banner-time-date-goback">
+                <div>
+                    <span id="date_and_time" class="s-t-p"></span></span>
+                </div>
+                <div>
+                    <span id="type_transfert" class="s-t-p" ></span> 
+                </div>
+            </div>
+            <div class="banner-price-auto">
+                <div>
+                    <span><strong>##</strong><br> <span class="s-t-p"># places, # bagage</span></span>
+                </div>
+                <div>
+                    <span class="s-price" style="color: #000000;">##</span> 
+                </div>
+            </div>
+            <div class="banner-time-km1">
+                <span>⌛ Environ # minutes, # km de routes</span>
+            </div>
+            <div class="title-choicev-div">
+                <span class="title-choicev">Information personnels</span>
+            </div><br>
+            <div class="input-box">
+                <input id="inputName" name="name" type="text" placeholder="Nom" required />
+            </div>
+            <div class="input-box">
+                <input id="inputFirstname" name="first_name"  type="text" placeholder="Prénom" required />
+            </div>
+            <div class="input-box">
+                <input id="inputTel" name="phone_number" type="tel" placeholder="Numéro de téléphone" required />
+            </div>
+            <div class="input-box">
+                <input id="inputEmail" name="email" type="email" placeholder="Email" required />
+            </div><br>
+            <span style="color:red;" id="errorStep3" class="error"></span>
+            <div class="button-container">
+                <button type="button" onclick="showStep(4)">Suivant</button>
+            </div>
+        </div>
+
+
+        <div class="step" id="step4">
+            <div class="back_step1-arrow">
+              <img src="{% get_static_prefix %}img/arrow-back.png" alt="Retour" id="backToStep3" style="cursor:pointer;">
+              <span class="title-choicev">Information personnels</span>
+            </div>
+            <div class='recap-addres'>
+                <div style="margin-left:10px;" id="address-container">
+                    <span style="font-weight:300; font-size:11px; color:#6b6b6b;"> 
+                        Lieu de départ  <br>
+                        <span style="font-weight:600; color:black; font-size:12px" id="departure-address-step4"></span>
+                    </span><br>
+                    <span style="margin-top: 15px; margin-bottom: 15px; font-weight:300; font-size:11px; color:#6b6b6b; display: none;" id="step-address-container2"> 
+                        Étape <br>
+                        <span style="font-weight:600; color:black; font-size:12px" id="step-address-step4"></span>
+                    </span>
+                    <span style="font-weight:300; font-size:11px; color:#6b6b6b;"> 
+                        Lieu d'arrivée   <br>
+                        <span style="font-weight:600; color:black; font-size:12px" id="arrival-address-step4"></span>
+                    </span>
+                </div>
+                <div>
+                    <img class="roadmap2" src="{% get_static_prefix %}img/roadmap1.png" alt="" id="roadmap-image_base2">
+                    <img class="roadmap2" src="{% get_static_prefix %}img/roadmapstep2.png" alt="" id="roadmap-image3" style="display:none; width: 30px;">
+                </div>
+            </div>
+            <div class="banner-time-date-goback">
+                <div>
+                    <span id="date_and_time" class="s-t-p"></span></span>
+                </div>
+                <div>
+                    <span id="type_transfert" class="s-t-p" ></span> 
+                </div>
+            </div>
+            <div class="banner-price-auto">
+                <div>
+                    <span><strong>##</strong><br> <span class="s-t-p"># places, # bagage</span></span>
+                </div>
+                <div>
+                    <span class="s-price" style="color: #000000;">##</span> 
+                </div>
+            </div>
+            <div class="banner-informations">
+                <div>
+                    <strong><span id="name"> </span> <span id="firstname"></span></strong>
+                    <br>
+                    <span class="s-t-p"><span id="tel"><br> </span> <span id="email"></span></span>
+                </div>
+            </div>
+            <div class="banner-time-km2">
+                <span>⌛ Environ # minutes, # km de routes</span>
+            </div>
+            <div class="title-choicev-div">
+                <span class="title-choicev">Informations complémentaires</span>
+            </div><br>
+            <div class="input-box">
+                <input id="passengersid" type="number" name="passengers" placeholder="Nombre de passager" required />
+            </div>
+            <div class="input-box">
+                <input id="volid" type="text" name="vol" placeholder="Numéro de vol" />
+            </div>
+            <div class="input-box">
+                <input id="assistanceid" type="text" name="assistance" placeholder="Assistance" />
+            </div>
+            <div class="input-box">
+                <textarea name="special_requests" placeholder="Indiquez ici toute autres demande spécifique : siège enfant, etc."></textarea>
+            </div>
+            <span style="color:red;" id="errorStep4" class="error"></span>
+            <div class="button-container">
+                <button type="button" onclick="showStep(5)">Moyens de paiements</button>
+            </div>
+        </div>
+
+        
+        <div class="step" id="step5">
+            <div class="back_step1-arrow">
+              <img src="{% get_static_prefix %}img/arrow-back.png" alt="Retour" id="backToStep4" style="cursor:pointer;">
+              <span class="title-choicev">Informations complémentaires</span>
+            </div>
+            <div class='recap-addres'>
+                <div style="margin-left:10px;" id="address-container">
+                    <span style="font-weight:300; font-size:11px; color:#6b6b6b;"> 
+                        Lieu de départ  <br>
+                        <span style="font-weight:600; color:black; font-size:12px" id="departure-address-step5"></span>
+                    </span><br>
+                    <span style="margin-top: 15px; margin-bottom: 15px; font-weight:300; font-size:11px; color:#6b6b6b; display: none;" id="step-address-container3"> 
+                        Étape <br>
+                        <span style="font-weight:600; color:black; font-size:12px" id="step-address-step5"></span>
+                    </span>
+                    <span style="font-weight:300; font-size:11px; color:#6b6b6b;"> 
+                        Lieu d'arrivée   <br>
+                        <span style="font-weight:600; color:black; font-size:12px" id="arrival-address-step5"></span>
+                    </span>
+                </div>
+                <div>
+                    <img class="roadmap2" src="{% get_static_prefix %}img/roadmap1.png" alt="" id="roadmap-image_base3">
+                    <img class="roadmap2" src="{% get_static_prefix %}img/roadmapstep2.png" alt="" id="roadmap-image4" style="display:none; width: 30px;">
+                </div>
+            </div>
+            <div class="banner-time-date-goback">
+                <div>
+                    <span id="date_and_time" class="s-t-p"></span></span>
+                </div>
+                <div>
+                    <span id="type_transfert" class="s-t-p" ></span> 
+                </div>
+            </div>
+            <div class="banner-price-auto">
+                <div>
+                    <span><strong>berline</strong><br> <span class="s-t-p">2 places, 1 bagage</span></span>
+                </div>
+                <div>
+                    <span class="s-price" style="color: #000000;">34$</span> 
+                </div>
+            </div>
+            <div class="banner-informations">
+                <div>
+                    <strong><span id="name1"> </span> <span id="firstname1"></span></strong>
+                    <br>
+                    <span class="s-t-p"><span id="tel1"><br> </span> <span id="email1"></span></span>
+                </div>
+            </div>
+            <div class="banner-time-km3">
+                <span>⌛ Environ # minutes, # km de routes</span>
+            </div>
+            <div class="title-choicev-div">
+                <span class="title-choicev">Moyens de paiements</span>
+            </div>
+            {% if show_cash_payment or show_online_payment %}
+            <select name="payment_method" id="paymentMethod" class="payment-select">
+                {% if show_cash_payment %}
+                <option value="cash" selected>Payer sur place</option>
+                {% endif %}
+                {% if show_online_payment %}
+                <option value="online">Paiement en ligne (Carte bancaire, Paypal...)</option>
+                {% endif %}
+            </select>
+        {% else %}
+            <p style="margin-left: 10px; color: red; ">Service indisponible pour le momment</p>
+        {% endif %}
+            <br>
+            <div class="button-container">
+                <button type="submit">Valider la réservation</button>
+            </div>
+        </div>
+    </form>
+
+    <div id="successSection" style="display:none;">
+        <h2 style="color: #669f72;">Réservation envoyer ✔</h2>
+        <p>Votre course a été réservée pour le 31 décembre à 12H34.</p>
+        <br>
+        <img class="sucess-book" src="{% get_static_prefix %}img/driver.png">
+        <div class='recap-book'>
+        </div>
+        <div class="text-end-recap">
+           <p style="font-size: 13px;">Merci pour votre réservation ! Un agent vous contactera ou vous recevrez un message dans un instant pour confirmer les détails de votre course.</p>
+       </div>
+       <br>
+    </div>
+</section>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_key }}&libraries=places"></script>
+<script src="{% static 'js/google_maps.js' %}"></script>
+<script src="{% static 'js/mapbox.js' %}"> </script>
+<script src="{% static 'js/main.js' %}"></script>
+<script>
+    const vehicleCosts = {
+        {% for vehicle_type in vehicle_types %}
+        '{{ vehicle_type.name }}': {
+            perKm: {{ vehicle_type.cost_per_km }},
+            perMin: {{ vehicle_type.cost_per_minute }},
+            minimumCost: {{ vehicle_type.minimum_cost }},
+            nightStart: '{{ vehicle_type.night_start_time }}',
+            nightEnd: '{{ vehicle_type.night_end_time }}',
+            nightIncrease: {{ vehicle_type.night_fare_increase }},
+            orly_fare : {{ vehicle_type.orly_fare }}, 
+            cdg_fare : {{ vehicle_type.cdg_fare }},
+        },
+        {% endfor %}
+    };
+
+    function calculateAndDisplayCost(vehicleType, duration, distance) {
+        console.log("fromPostalCode:", fromPostalCode, "toPlaceId:", toPlaceId);
+
+        var stepInputElem = document.getElementById('step_place');
+
+        if (parisPostcodes.includes(fromPostalCode) && airportNames.hasOwnProperty(toPlaceId) && !(stepInputElem)) {
+            console.log("Utilisation des tarifs d'aéroport fixes");
+            
+            let fixedPrice = 0;
+            
+            if (airportNames[toPlaceId] === 'CDG') {
+                fixedPrice = vehicleCosts[vehicleType].cdg_fare;
+            } else if (airportNames[toPlaceId] === 'Orly') {
+                fixedPrice = vehicleCosts[vehicleType].orly_fare;
+            }
+
+
+            let isRoundTrip = document.querySelector('.allere-select[name="is_round_trip"]').value === 'Yes';
+        
+            if (isRoundTrip) {
+                fixedPrice = (fixedPrice * 2).toFixed(2);
+            }
+
+            document.querySelector('.allere-select[name="is_round_trip"]').addEventListener('change', function() {
+                calculateAndDisplayCost(vehicleType, duration, distance);
+            });
+        
+            
+            const nightStart = vehicleCosts[vehicleType].nightStart;
+            const nightEnd = vehicleCosts[vehicleType].nightEnd;
+            const nightIncrease = vehicleCosts[vehicleType].nightIncrease;
+
+            const currentTime = new Date();
+            const currentHoursMinutes = currentTime.getHours() * 100 + currentTime.getMinutes();
+            const nightStartHM = parseInt(nightStart.replace(":", ""), 10);
+            const nightEndHM = parseInt(nightEnd.replace(":", ""), 10);
+            
+            if ((nightStartHM <= currentHoursMinutes && currentHoursMinutes <= 2400) || 
+                (0 <= currentHoursMinutes && currentHoursMinutes <= nightEndHM)) {
+                fixedPrice = (fixedPrice * (1 + nightIncrease / 100)).toFixed(2);
+            }
+            
+            document.querySelector(`.price[data-vehicle-type="${vehicleType}"] .s-price`).innerText = `${fixedPrice}€`;
+            
+        } else  {
+            console.log("Utilisation des tarifs standard");
+            const costPerKm = vehicleCosts[vehicleType].perKm;
+            const costPerMin = vehicleCosts[vehicleType].perMin;
+            const minimumCost = vehicleCosts[vehicleType].minimumCost;
+            const nightStart = vehicleCosts[vehicleType].nightStart;
+            const nightEnd = vehicleCosts[vehicleType].nightEnd;
+            const nightIncrease = vehicleCosts[vehicleType].nightIncrease;
+            
+            let totalCost = (costPerKm * distance + costPerMin * duration).toFixed(2);
+            
+            const currentTime = new Date();
+            const currentHoursMinutes = currentTime.getHours() * 100 + currentTime.getMinutes();
+            const nightStartHM = parseInt(nightStart.replace(":", ""), 10);
+            const nightEndHM = parseInt(nightEnd.replace(":", ""), 10);
+            
+            if ((nightStartHM <= currentHoursMinutes && currentHoursMinutes <= 2400) || 
+                (0 <= currentHoursMinutes && currentHoursMinutes <= nightEndHM)) {
+                totalCost = (totalCost * (1 + nightIncrease / 100)).toFixed(2);
+            }
+            
+            if (totalCost < minimumCost) {
+                totalCost = minimumCost.toFixed(2);
+            }
+
+            let isRoundTrip = document.querySelector('.allere-select[name="is_round_trip"]').value === 'Yes';
+            let etapeAuRetour = document.querySelector('.allere-select[name="step_on_return"]').value === 'No';
+        
+            if (isRoundTrip) {
+                if (etapeAuRetour) {
+                    totalCost = (totalCost * 2 * 0.75).toFixed(2);
+                    
+                } else {
+                    totalCost = (totalCost * 2).toFixed(2);
+                }
+            }
+
+            document.querySelector('.allere-select[name="is_round_trip"]').addEventListener('change', function() {
+                calculateAndDisplayCost(vehicleType, duration, distance);
+            });
+
+            document.querySelector('.allere-select[name="step_on_return"]').addEventListener('change', function() {
+                console.log('Calcul du coût sans étape au retour')
+                calculateAndDisplayCost(vehicleType, duration, distance);
+            });
+            
+            document.querySelector(`.price[data-vehicle-type="${vehicleType}"] .s-price`).innerText = `${totalCost}€`;
+        }
+    
+    }
+    
+    function toggleStepInput() {
+        var container = document.querySelector('.input-container');
+        var toggleImg = document.getElementById('toggleImg');
+        var roadmapImg = document.getElementById('roadmapImg');
+
+        var stepInput = document.querySelector('.step-input');
+        if (stepInput) stepInput.parentElement.remove();
+    
+        if (!container || !toggleImg) {
+            console.error('Elements not found!');
+            return;
+        }
+    
+        if (!isStepInputAdded) {
+            var stepInputBox = document.createElement('div');
+            stepInputBox.classList.add('input-box');
+            
+            var stepInput = document.createElement('input');
+            stepInput.type = 'text';
+            stepInput.id = 'step_place';
+            stepInput.placeholder = 'Étape';
+            stepInput.name = 'step_place';
+            stepInput.required = true;
+            stepInput.classList.add('input-field', 'step-input');
+            
+            var clearIcon = document.createElement('i');
+            clearIcon.classList.add('clear-icon', 'fas', 'fa-times-circle');
+            clearIcon.onclick = function() { stepInput.value = ''; };
+            
+            stepInputBox.appendChild(stepInput);
+            stepInputBox.appendChild(clearIcon);
+            container.insertBefore(stepInputBox, container.children[container.children.length-1]);
+    
+            // Initialize Autocomplete
+            initializeStepAutocomplete();
+    
+            // Change the icon to minus
+            toggleImg.src = "{% get_static_prefix %}img/minus.png";
+            roadmapImg.src = "{% get_static_prefix %}img/roadmap_step.png";
+            document.getElementById('displayallretback').style.display="flex"
+            
+    
+            isStepInputAdded = true;
+        } else {
+            // Remove step input
+            var stepInput = document.querySelector('.step-input');
+            if (stepInput) stepInput.parentElement.remove();
+    
+            // Change the icon to plus
+            toggleImg.src = "{% get_static_prefix %}img/plus.png";
+            roadmapImg.src = "{% get_static_prefix %}img/roadmap.png";
+            document.getElementById('displayallretback').style.display="none";
+            window.stepCoords = null;  
+            manageMarkers(null, 'step');
+            
+            //calculateAndDisplayRoute();
+            
+    
+            isStepInputAdded = false;
+        }
+    }
+    
+</script>
+<script>
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var stripe = Stripe('{{ stripe_public_key }}');
+    
+        document.getElementById('reservationForm').addEventListener('submit', function(e) {
+            e.preventDefault();  
+            
+            var formData = new FormData(this);  
+            var userUUID = window.location.pathname.split('/')[1];
+            
+            fetch('/' + userUUID + '/make_reservation/',  { 
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken') 
+                }
+            })
+            .then(response => response.json())  
+            .then(data => {
+                if (data.success) {
+                    if (data.reservation.payment_method === 'online' && data.stripe_session_id) {
+                        return stripe.redirectToCheckout({sessionId: data.stripe_session_id});
+                    } else {
+                        window.location.href = `/form_success/${data.uuid}/`; 
+                    }
+                } else {
+                    console.error(data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);  
+            });
+        });
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+});
+</script>
+
+<script>
+window.onload = function() {
+        sendHeightToParent();
+    
+        observer = new MutationObserver(sendHeightToParent);
+        observer.observe(document.body, { attributes: true, childList: true, subtree: true });
+    
+        document.body.addEventListener('click', function() {
+            setTimeout(sendHeightToParent, 100);
+        }, false);
+    
+        let resizeTimeout;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(sendHeightToParent, 100);
+        });
+    };
+    
+    function sendHeightToParent() {
+        let currentHeight = document.documentElement.scrollHeight;
+        window.parent.postMessage({
+            'height': currentHeight,
+            'iframe': 'myIframe'
+        }, '*');
+    }
+    
+    function forceReflow(element) {
+        void element.offsetHeight;  
+    }
+    
+    document.getElementById('backToStep1').addEventListener('click', function() {
+        window.parent.postMessage({ command: 'backToStep1Clicked' }, '*');
+    });
+    
+    window.addEventListener('message', function(event) {
+        if (event.data.command && event.data.command === 'resetHeight') {
+            sendHeightToParent();
+        }
+    }, false);
+</script>
+</body>
+</html>
