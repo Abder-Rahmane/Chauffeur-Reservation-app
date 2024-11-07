@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9, user-scalable=no">
+<title>Réservation</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<script src='https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js'></script>
+<link href='https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css' rel='stylesheet' />
+<script src="https://maps.googleapis.com/maps/api/js?key=&libraries=places"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,300;0,400;0,500;0,600;1,200&display=swap" rel="stylesheet">
+<script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.1.0/mapbox-gl-directions.js'></script>
+<link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-directions/v4.1.0/mapbox-gl-directions.css' type='text/css' />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<script src="https://js.stripe.com/v3/"></script>
+</head>
+
+<style>
+body { 
+        margin: 0;
+        background-color: white;
+        font-family: roboto;
+        padding: 0px;
+
+    }
+
+#reservationForm { 
+    padding: 40px 40px 0px 40px;
+    }
+
+    
+input, select, button {
+    height: 40px;
+    width: 100%;
+    margin-top: 8px;
+    outline: none;
+    padding: 0 15px;
+    font-size: 13px;
+    font-weight: 400;
+    color: #333;
+    border: 1px solid #ededed;
+    border-bottom-width: 3.5px;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+    font-family: roboto;
+}
+button {
+    color: #fff;
+    letter-spacing: 1px;
+    border: none;
+    background-color: #000000;
+    background-image: linear-gradient(62deg, #2d2d2d 0%, #272727 100%);
+    cursor: pointer;
+    width: 100%;
+}
+
+.wrapper form .input-box {
+    height: 37px;
+    margin: 12px 0;
+}
+.wrapper form .input-box {
+    height: 37px;
+    margin: 12px 0;
+}
+
+.input-box.button input {
+    color: #fff;
+    letter-spacing: 1px;
+    border: none;
+    background-color: #1b8426;
+    background-image: linear-gradient(62deg, #7efbb3 0%, #036704 100%);
+    cursor: pointer;
+}
+
+*, *:before, *:after {
+    box-sizing: border-box;
+}
+img {
+    width: 10px;
+}
+
+
+.input-box {
+    width: 100%;
+}
+.div-cote {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.div-cote > div {
+    flex-shrink: 0; /* Evite le rétrécissement des éléments enfants en-dessous de leur largeur naturelle */
+}
+
+.div-cote > div:nth-child(2) {
+    flex-grow: 1; /* Fait en sorte que cette div prenne tout l'espace disponible */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin: 0 20px; /* Ajoutez un espace autour des inputs. Ajustez selon vos besoins */
+}
+
+span.title1 {
+        margin-left: 31px;
+        font-weight: 600;
+        font-size: 20px;
+    }
+
+
+  span.sous-title {
+    margin-left: 31px;
+    font-weight: 300;
+    font-size: 12px;
+}
+
+
+  span.s-t-p {
+    font-size: 11px;
+    font-weight: 300;
+}
+
+.back_step1-arrow {
+    display: flex;
+    align-items: center;
+    padding-top: 20px;
+    padding-bottom: 30px;
+}
+
+span.title-choicev {
+    margin-left: 10px;
+    font-weight: 600;
+}
+
+.recap-addres {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    background-color: #f5f5f5;
+    padding: 12px 20px 12px;
+    border-radius: 8px;
+    border: solid 1px;
+    border-color: #c9c9c9;
+}
+.price {
+    margin-left: auto; /* pousse le div vers la droite */
+    /* Ajoutez d'autres styles au besoin */
+}
+span.s-price {
+    font-weight: 600;
+    color: #5664cf;
+}
+
+.title-choicev-div {
+    margin-top: 20px;
+    padding-top: 21px;
+    border-top: solid 1px;
+    border-color: #c9c9c9;
+}
+
+
+.banner-time-km {
+    background-color: #5664d0;
+    color: white;
+    border-radius: 8px;
+    height: 46px;
+    border: solid 1px;
+    padding: 10px 20px;
+    font-size: 14px;
+    margin-top: 15px;
+}
+
+
+.banner-time-km1 {
+    background-color: #5664d0;
+    color: white;
+    border-radius: 8px;
+    height: 46px;
+    border: solid 1px;
+    padding: 10px 20px;
+    font-size: 14px;
+    margin-top: 15px;
+}
+
+.banner-price-auto {
+    background-color: #f5f5f5;
+    color: black;
+    border-radius: 8px;
+    height: 64px;
+    border: solid 1px;
+    padding: 10px 20px;
+    font-size: 14px;
+    margin-top: 15px;
+    border-color: #c9c9c9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+
+.banner-time-km2 {
+    background-color: #5664d0;
+    color: white;
+    border-radius: 8px;
+    height: 46px;
+    border: solid 1px;
+    padding: 10px 20px;
+    font-size: 14px;
+    margin-top: 15px;
+}
+
+
+
+.banner-time-km3 {
+    background-color: #5664d0;
+    color: white;
+    border-radius: 8px;
+    height: 46px;
+    border: solid 1px;
+    padding: 10px 20px;
+    font-size: 14px;
+    margin-top: 15px;
+}
+
+
+.payment-select {
+    color: black;
+    border-radius: 8px;
+    height: 42px;
+    border: solid 1px;
+    padding: 10px 20px;
+    font-size: 12px;
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;  /* ou la largeur désirée */
+}
+
+img.roadmap2 {
+    width: 18px;
+    margin-right: 11px;
+}
+
+
+.text-end-recap {
+    width: 76%;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.div-delet-reserv{
+    height: 50%;
+    width: 100%;
+    overflow-y: auto;
+    padding: 0px 40px;
+    padding-bottom: 40px;
+}
+
+
+</style>
+<body>
+<section class="wraper">
+    </div>
+    <form id="reservationForm"  action="{% url 'retry_payment' reservation.uuid %}" method="post">
+        {% csrf_token %}
+        <div class="step" id="step5">
+            <div style="margin-left: 10px; display: block;" class="back_step1-arrow" >
+                <span style="color: #d96666; margin-left:0px;" class="title-choicev">Paiement échoué</span><br><br>
+                <span style="font-size: 12px;">Il semble y avoir un problème avec votre paiement. Veuillez vérifier vos informations de paiement et vous assurer que votre compte dispose de fonds suffisants.</span>
+            </div>
+
+            <div class='recap-addres'>
+                <div style="margin-left:10px;" id="address-container">
+                    <span style="font-weight:300; font-size:11px; color:#6b6b6b;"> 
+                        Lieu de départ  <br>
+                        <span style="font-weight:600; color:black; font-size:12px" id="departure-address-step5">{{ reservation.from_place }}</span>
+                    </span><br>
+            
+                    {% if reservation.step_place %}
+                        <span style="font-weight:300; font-size:11px; color:#6b6b6b;"> 
+                            Étape  <br>
+                            <span style="font-weight:600; color:black; font-size:12px" id="step-address-step5">{{ reservation.step_place }}</span>
+                        </span><br>
+                    {% endif %}
+            
+                    <span style="font-weight:300; font-size:11px; color:#6b6b6b;"> 
+                        Lieu d'arrivée   <br>
+                        <span style="font-weight:600; color:black; font-size:12px" id="arrival-address-step5">{{ reservation.to_place }}</span>
+                    </span>
+                </div>
+                <div>
+                    <img class="roadmap2" src="{% get_static_prefix %}img/{% if reservation.step_place %}roadmapstep2{% else %}roadmap1{% endif %}.png" alt="">
+                </div>
+            </div>
+
+
+            <div class="banner-price-auto">
+                <span>{{ reservation.reservation_date|date:"d/m/Y" }} à {{ reservation.reservation_time|time:"H\hi" }}</span>
+                {% if reservation.is_round_trip %}
+                    {% if reservation.step_on_return %}
+                        <span>Aller-retour avec étape au retour</span>
+                    {% else %}
+                        <span>Aller-retour</span>
+                    {% endif %}
+                {% else %}
+                    <span>Aller simple</span>
+                {% endif %}
+            </div>
+
+
+            <div class="banner-price-auto">
+                <div>
+                    <span>
+                        <strong>{{ reservation.vehicle_type }}</strong><br>
+                        <span class="s-t-p">
+                            {% if reservation.vehicle_type == "economique" %}
+                                3 places, 3 bagages
+                            {% elif reservation.vehicle_type == "berline" %}
+                                3 places, 3 bagages
+                            {% elif reservation.vehicle_type == "van" %}
+                                6 places, 6 bagages
+                            {% else %}
+                                Information non disponible
+                            {% endif %}
+                        </span>
+                    </span>
+                </div>
+                <div>
+                    <span class="s-price" style="color: #000000;">{{ reservation.price }}</span>€
+                </div>
+            </div>
+            <div class="banner-price-auto">
+                <div>
+                    <strong><span id="name1"> {{ reservation.name }}</span> <span id="firstname1">{{ reservation.first_name }}</span></strong>
+                    <br>
+                    <span class="s-t-p"><span id="tel1">{{ reservation.phone_number }} </span> <span id="email1">{{ reservation.email }}</span></span>
+                </div>
+            </div>
+            <div class="title-choicev-div">
+                <span class="title-choicev">Moyens de paiements</span>
+            </div>
+            <input type="hidden" name="reservation_uuid" value="{{ reservation.uuid }}">
+            <select name="payment_method" id="paymentMethod" class="payment-select">
+                <option value="online" selected>Paiement en ligne (Carte bancaire, Paypal...)</option>
+                <option value="cash"> Payer sur place</option>
+            </select>
+            <br>
+            <div class="button-container">
+                <button type="submit">Valider la réservation</button>
+            </div><br>
+        </div>
+    </form>
+    <div class="div-delet-reserv">
+        <form id="cancelForm" method="post" action="{% url 'form_error' uuid=reservation.uuid %}">
+            {% csrf_token %}
+            <div class="button-container">
+                <button style="background-image: linear-gradient(62deg, #d96666 0%, #d96666 100%);" type="submit" name="cancel_reservation">Annuler la reservation</button>
+            </div>
+        </form>        
+    <div style="text-align:center; color:#d96666; font-size:14px; margin-top: 10px;">L'annulation de la réservation est une action irréversible !</div>
+</div>
+
+</section>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+    // Votre clé publique Stripe
+    var stripe = Stripe('{{ stripe_public_key }}');
+
+    document.getElementById('reservationForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var formData = new FormData(this);
+        var paymentMethod = document.getElementById('paymentMethod').value;  
+        
+        fetch(this.action, {  
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => {
+            if (response.headers.get("Content-Type").includes("application/json")) {
+                return response.json();
+            } else {
+                throw new Error("Server response is not JSON");
+            }
+        })
+        .then(data => {
+            if (data.success) {
+                if (paymentMethod === 'online' && data.stripe_session_id) {
+                    return stripe.redirectToCheckout({sessionId: data.stripe_session_id});
+                } else if(paymentMethod === 'cash' && data.redirect_url) {
+                    window.location.href = data.redirect_url;
+                } 
+            } else {
+                console.error(data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    });
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+</script> 
+</body>
+</html>

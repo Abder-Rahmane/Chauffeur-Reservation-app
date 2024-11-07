@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<style>
+    main.col-md-9.ms-sm-auto.col-lg-10.px-md-4.main-content {
+        height: 100vh;
+        overflow-y: auto;
+    }
+    .card-header.bg-dark.text-white {
+        background-color: black!important;
+    }
+    
+    button.btn.btn-dark {
+        background-color: black;
+    }
+
+    @media (max-width: 950px){
+        .pl-md-4, .px-md-4 {
+            padding-left: 2rem!important;
+            padding-right: 2rem!important;
+        }
+        .flex-course-mobile {
+            display: flex!important;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 100px;
+        }
+        main.col-md-9.ms-sm-auto.col-lg-10.px-md-4.main-content {
+            height: auto;
+            overflow-y: none;
+        }
+    }
+
+    pre {
+        background-color: #f5f5f5;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+    }
+
+
+</style>
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
+        <div>
+           <h1 class="h2">Settings</h1>       
+        </div>
+    </div>
+     <!-- Section pour le choix du mode de paiement -->
+         {% if messages %}
+         <ul class="messages">
+             {% for message in messages %}
+                 <li{% if message.tags %} style="color:green;" class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+             {% endfor %}
+         </ul>
+     {% endif %}
+     <div class="card mt-4 shadow" style="width: 100%;">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <h4>Widget</h4>
+            <button class="btn btn-secondary" id="copyBtn">Copier</button>
+        </div>
+        <div class="card-body">
+            <pre><code id="codeContent">&lt;iframe src="https://vercel-reserchauffeur.vercel.app/{{ custom_user.uuid }}" width="800" frameborder="0"&gt;&lt;/iframe&gt;
+    
+    &lt;script&gt;
+    window.addEventListener('message', function(event) {
+        var iframe = document.querySelector('iframe[src="https://vercel-reserchauffeur.vercel.app/{{ custom_user.uuid }}"]');
+        if (event.data.command && event.data.command === 'backToStep1Clicked') {
+            console.log('boutton cliquer');
+            iframe.contentWindow.postMessage({ command: 'resetHeight' }, '*');
+            iframe.style.setProperty("height", "505px", "important");  // set height avec !important
+        }
+        if (event.data.iframe && event.data.iframe === 'myIframe') {
+            iframe.style.setProperty("height", event.data.height + 'px'); // set height avec !important
+        }
+    }, false);
+&lt;/script&gt;</code></pre>
+        </div>
+    </div><br>
+     <div class="card mt-4 shadow" style="width: 100%;">
+         <div class="card-header bg-dark text-white">
+             <h4>Mode de Paiement</h4>
+         </div>
+         <div class="card-body">
+            <!-- Form pour choisir le mode de paiement -->
+            <form method="POST" action="{% url 'setting' %}">
+                {% csrf_token %}
+                <input type="hidden" name="form_type" value="payment_method">
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="onlinePaymentSwitch" name="online_payment" {% if user_settings.online_payment %}checked{% endif %}>
+                    <label class="form-check-label" for="onlinePaymentSwitch">Activer le paiement en ligne</label><br><br>
+        
+                    <div id="onlinePaymentTime" style="{% if not user_settings.online_payment %}display: none;{% endif %}">
+                        <label for="onlinePaymentStartTime">De :</label>
+                        <!-- Affichage de l'heure par défaut pour le paiement en ligne - début -->
+                        <input type="time" id="onlinePaymentStartTime" name="online_payment_start_time" value="{{ user_settings.online_payment_start_time|date:"H:i" }}">
+                        <label for="onlinePaymentEndTime">à :</label>
+                        <!-- Affichage de l'heure par défaut pour le paiement en ligne - fin -->
+                        <input type="time" id="onlinePaymentEndTime" name="online_payment_end_time" value="{{ user_settings.online_payment_end_time|date:"H:i" }}">
+                    </div>
+                    
+                </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="cashPaymentSwitch" name="cash_payment" {% if user_settings.cash_payment %}checked{% endif %}>
+                    <label class="form-check-label" for="cashPaymentSwitch">Activer le paiement sur place</label><br><br>
+                </div>
+                <button type="submit" class="btn btn-dark">Mettre à jour</button>
+            </form>
+        </div>
+     </div><br>
+     <!-- Section pour la redirection -->
+<div class="card mt-4 shadow" style="width: 100%;">
+    <div class="card-header bg-dark text-white">
+        <h4>Redirection</h4>
+    </div>
+    <div class="card-body">
+        <!-- Form pour saisir l'URL de redirection -->
+        <form method="POST" action="{% url 'setting' %}">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="redirection_url">
+            <div class="mb-3">
+                <label for="redirectionUrl" class="form-label">URL de redirection</label>
+                <input type="url" name="url_website" class="form-control" id="redirectionUrl" placeholder="Entrez l'URL de redirection" value="{{user_settings.url_website}}">
+            </div>
+            <button type="submit" class="btn btn-dark">Mettre à jour l'URL</button>
+        </form>
+    </div>
+</div><br><br>
+    <!-- Section pour les coûts -->
+    <div class="row">
+        {% for vehicle_type in vehicle_types %}
+            <div class="col-md-6 mb-4">
+                <div class="card border-dark">
+                    <div class="card-header bg-dark text-white">
+                        {{ vehicle_type.name }}
+                    </div>
+                    <div class="card-body">
+    
+                        <!-- Form pour le type de véhicule -->
+                        <form class="{{vehicle_type.name}}Form" method="POST" action="{% url 'setting' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="form_type" value="vehicle_type">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="{{vehicle_type.name}}Switch" name="{{vehicle_type.name}}_active" {% if vehicle_type.active %}checked{% endif %}>
+                                <label class="form-check-label" for="{{vehicle_type.name}}Switch">Activer {{vehicle_type.name}}</label>
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{vehicle_type.name}}CostPerKm" class="form-label">Coût par km</label>
+                                <input type="number" step="0.01" class="form-control" id="{{vehicle_type.name}}CostPerKm" name="{{vehicle_type.name}}_cost_per_km" placeholder="Entrez le coût par km" value="{{vehicle_type.cost_per_km}}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{vehicle_type.name}}CostPerMinute" class="form-label">Coût par minute</label>
+                                <input type="number" step="0.01" class="form-control" id="{{vehicle_type.name}}CostPerMinute" name="{{vehicle_type.name}}_cost_per_minute" placeholder="Entrez le coût par minute" value="{{vehicle_type.cost_per_minute}}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{vehicle_type.name}}MinimumCost" class="form-label">Coût minimum</label>
+                                <input type="number" step="0.01" class="form-control" id="{{vehicle_type.name}}MinimumCost" name="{{vehicle_type.name}}_minimum_cost" placeholder="Entrez le coût minimum" value="{{vehicle_type.minimum_cost}}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{vehicle_type.name}}OrlyFare" class="form-label">Forfait Paris → Orly</label>
+                                <input type="number" step="0.01" class="form-control" id="{{vehicle_type.name}}OrlyFare" name="{{vehicle_type.name}}_orly_fare" placeholder="Entrez le forfait pour Orly" value="{{vehicle_type.orly_fare}}">
+                            </div>
+                            <div class="mb-3">
+                                <label for="{{vehicle_type.name}}CDGFare" class="form-label">Forfait Paris → CDG</label>
+                                <input type="number" step="0.01" class="form-control" id="{{vehicle_type.name}}CDGFare" name="{{vehicle_type.name}}_cdg_fare" placeholder="Entrez le forfait pour CDG" value="{{vehicle_type.cdg_fare}}">
+                            </div>
+                            <h5 class="mt-4">Augmentation du tarif (%)</h5>
+                            <div class="mb-3">
+                                <input type="time" class="form-control" id="{{vehicle_type.name}}NightStart" name="{{vehicle_type.name}}_night_start_time" value="{{vehicle_type.night_start_time|date:'H:i'}}"><br>
+                                <input type="time" class="form-control" id="{{vehicle_type.name}}NightEnd" name="{{vehicle_type.name}}_night_end_time" value="{{vehicle_type.night_end_time|date:'H:i'}}">
+                            </div>
+                            <div class="mb-3">
+                                <input type="range" class="form-range" min="0" max="100" step="1" id="{{vehicle_type.name}}NightIncreaseRange" name="{{vehicle_type.name}}_night_fare_increase" value="{{vehicle_type.night_fare_increase}}">
+                                <label for="{{vehicle_type.name}}NightIncreaseRange" class="form-label" id="{{vehicle_type.name}}NightIncreaseLabel">Augmentation : {{vehicle_type.night_fare_increase}}%</label>
+                            </div>
+    
+                            <button type="submit" class="btn btn-dark">Mettre à jour</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% if forloop.counter|divisibleby:2 and not forloop.last %}
+                </div><div class="row">
+            {% endif %}
+        {% endfor %}
+    </div>
+<script>
+    // Vous pouvez utiliser ce script pour activer/désactiver les formulaires en fonction du commutateur
+    document.addEventListener("DOMContentLoaded", function() {
+        const vehicleTypes = ["Économique", "Berline", "Premium", "Minibus", "Van"];
+        vehicleTypes.forEach(type => {
+            const switchEl = document.getElementById(type + "Switch");
+            const formEl = document.querySelector("." + type + "Form");
+
+            switchEl.addEventListener("change", function() {
+                formEl.style.display = this.checked ? "block" : "none";
+            });
+        });
+    });
+
+    document.querySelectorAll('[id$="NightIncreaseRange"]').forEach(range => {
+        range.addEventListener("input", function() {
+            const label = document.getElementById(this.id.replace("Range", "Label"));
+            label.textContent = "Augmentation : " + this.value + "%";
+        });
+    })
+</script>
+<script>
+    // Vous pouvez utiliser du JavaScript pour afficher ou masquer les plages horaires selon si la case est cochée ou non
+    document.getElementById('onlinePaymentSwitch').addEventListener('change', function() {
+        var timeContainer = document.getElementById('onlinePaymentTime');
+        if (this.checked) {
+            timeContainer.style.display = "block";
+        } else {
+            timeContainer.style.display = "none";
+        }
+    });
+
+    document.getElementById('cashPaymentSwitch').addEventListener('change', function() {
+        var timeContainer = document.getElementById('cashPaymentTime');
+        if (this.checked) {
+            timeContainer.style.display = "block";
+        } else {
+            timeContainer.style.display = "none";
+        }
+    });
+</script>
+<script>
+    document.getElementById('copyBtn').addEventListener('click', function() {
+        const range = document.createRange();
+        range.selectNode(document.getElementById('codeContent'));
+        window.getSelection().removeAllRanges();
+        window.getSelection().addRange(range);
+        document.execCommand('copy');
+        window.getSelection().removeAllRanges();
+        alert('Code copié!');
+    });
+</script>
+{% endblock %}

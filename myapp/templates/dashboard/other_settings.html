@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<style>
+    main.col-md-9.ms-sm-auto.col-lg-10.px-md-4.main-content {
+        height: 100vh;
+        overflow-y: auto;
+    }
+    .card-header.bg-dark.text-white {
+        background-color: black!important;
+    }
+    
+    button.btn.btn-dark {
+        background-color: black;
+    }
+    @media (max-width: 950px){
+        .pl-md-4, .px-md-4 {
+            padding-left: 2rem!important;
+            padding-right: 2rem!important;
+        }
+        main.col-md-9.ms-sm-auto.col-lg-10.px-md-4.main-content {
+            height: auto;
+            overflow-y: initial;
+        }
+
+        .mb-4, .my-4 {
+            margin-bottom: 1.5rem!important;
+        }
+    }
+
+</style>
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
+    <h1 class="h2 text-dark">Settings</h1>
+</div>
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+        <li{% if message.tags %} style="color:green;" class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+<div class="card mt-4 shadow">
+    <div class="card-header bg-dark text-white">
+        <h4>Clés d'API</h4>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{% url 'other_settings' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="stripePublicApiKey" class="form-label">Clé publique Stripe</label>
+                <input type="text" class="form-control" id="stripePublicApiKey" name="stripe_public_key" placeholder="Entrez votre clé publique Stripe" value="{{ user_settings.stripe_public_key }}">
+            </div>
+            <div class="mb-3">
+                <label for="stripeSecretApiKey" class="form-label">Clé secrète Stripe</label>
+                <input type="password" class="form-control" id="stripeSecretApiKey" name="stripe_secret_key" placeholder="Entrez votre clé secrète Stripe" value="{{ user_settings.stripe_secret_key }}">
+            </div>
+            <div class="mb-3">
+                <label for="googleMapsApiKey" class="form-label">API Google Maps</label>
+                <input type="text" class="form-control" id="googleMapsApiKey" name="google_maps_key" placeholder="Entrez votre clé API Google Maps" value="{{ user_settings.google_maps_key }}">
+            </div>
+            <button type="submit" name="form_type" value="api_keys" class="btn btn-dark">Mettre à jour les clés d'API</button>
+        </form>
+    </div>
+</div>
+
+<div class="card mt-4 shadow">
+    <div class="card-header bg-dark text-white">
+        <h4>Notifications</h4>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{% url 'other_settings' %}">
+            {% csrf_token %}
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" id="notificationSwitch" name="notifications_active" {% if user_settings.notifications_active %}checked{% endif %}>
+                <label class="form-check-label" for="notificationSwitch">Activer les notifications</label>
+            </div>
+            <button type="submit" name="form_type" value="notifications" class="btn btn-dark">Mettre à jour les notifications</button>
+        </form>
+    </div>
+</div>
+
+
+{% endblock %}
